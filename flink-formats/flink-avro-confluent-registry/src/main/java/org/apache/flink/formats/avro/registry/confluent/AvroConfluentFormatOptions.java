@@ -61,6 +61,19 @@ public class AvroConfluentFormatOptions {
                                     + "the Debezium schema which is a nullable record type including "
                                     + "fields 'before', 'after', 'op' ('debezium-avro-confluent').");
 
+    public static final ConfigOption<Boolean> AUTO_REGISTER_SCHEMA =
+            ConfigOptions.key("auto.register.schema")
+                    .booleanType()
+                    .defaultValue(true)
+                    .withFallbackKeys("schema-registry.auto.register.schema")
+                    .withDescription(
+                            "True if the schema needs to be auto-registered (default). If set to false the "
+                                    + "schema-registry-client does a lookup to the schema-registry using the "
+                                    + "schema provided with option 'schema' or the table schema. If set to "
+                                    + "false the schema is not going to be registered automatically. This "
+                                    + "supports use-cases where schemas are published in a centralized and"
+                                    + "externally controlled way.");
+
     // --------------------------------------------------------------------------------------------
     // Commonly used options maintained by Flink for convenience
     // --------------------------------------------------------------------------------------------

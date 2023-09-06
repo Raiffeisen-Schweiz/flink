@@ -37,29 +37,33 @@ class CachedSchemaCoderProvider implements SchemaCoder.SchemaCoderProvider {
     private static final long serialVersionUID = 8610401613495438381L;
     private final String subject;
     private final String url;
+    private final Boolean autoRegisterSchema;
     private final int identityMapCapacity;
     private final @Nullable Map<String, ?> registryConfigs;
 
     CachedSchemaCoderProvider(String url, int identityMapCapacity) {
-        this(null, url, identityMapCapacity, null);
+        this(null, url, null, identityMapCapacity, null);
     }
 
     CachedSchemaCoderProvider(
             @Nullable String subject,
             String url,
+            @Nullable Boolean autoRegisterSchema,
             int identityMapCapacity,
             @Nullable Map<String, ?> registryConfigs) {
         this.subject = subject;
         this.url = Objects.requireNonNull(url);
         this.identityMapCapacity = identityMapCapacity;
         this.registryConfigs = registryConfigs;
+        this.autoRegisterSchema = autoRegisterSchema;
     }
 
     @Override
     public SchemaCoder get() {
         return new ConfluentSchemaRegistryCoder(
                 this.subject,
-                new CachedSchemaRegistryClient(url, identityMapCapacity, registryConfigs));
+                new CachedSchemaRegistryClient(url, identityMapCapacity, registryConfigs),
+                this.autoRegisterSchema);
     }
 
     @Override

@@ -117,7 +117,7 @@ class CachedSchemaCoderProviderTest {
     }
 
     private CachedSchemaCoderProvider initCachedSchemaCoderProvider(Map<String, String> config) {
-        return new CachedSchemaCoderProvider("test", "someUrl", 1000, config);
+        return new CachedSchemaCoderProvider("test", "someUrl", null, 1000, config);
     }
 
     private SSLSocketFactory getSslSocketFactoryFromProvider(CachedSchemaCoderProvider provider) {

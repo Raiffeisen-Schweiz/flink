@@ -20,6 +20,7 @@ package org.apache.flink.formats.avro.registry.confluent;
 
 import org.apache.flink.formats.avro.SchemaCoder;
 
+import io.confluent.kafka.schemaregistry.avro.AvroSchema;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 import org.apache.avro.Schema;
@@ -37,6 +38,7 @@ public class ConfluentSchemaRegistryCoder implements SchemaCoder {
 
     private final SchemaRegistryClient schemaRegistryClient;
     private String subject;
+    private Boolean autoRegisterSchema;
     private static final int CONFLUENT_MAGIC_BYTE = 0;
 
     /**
@@ -45,10 +47,13 @@ public class ConfluentSchemaRegistryCoder implements SchemaCoder {
      *
      * @param schemaRegistryClient client to connect schema registry
      * @param subject subject of schema registry to produce
+     * @param autoRegisterSchema false if schema should not be registered but just looked up
      */
-    public ConfluentSchemaRegistryCoder(String subject, SchemaRegistryClient schemaRegistryClient) {
+    public ConfluentSchemaRegistryCoder(
+            String subject, SchemaRegistryClient schemaRegistryClient, Boolean autoRegisterSchema) {
         this.schemaRegistryClient = schemaRegistryClient;
         this.subject = subject;
+        this.autoRegisterSchema = autoRegisterSchema;
     }
 
     /**
@@ -81,13 +86,25 @@ public class ConfluentSchemaRegistryCoder implements SchemaCoder {
 
     @Override
     public void writeSchema(Schema schema, OutputStream out) throws IOException {
-        try {
-            int registeredId = schemaRegistryClient.register(subject, schema);
-            out.write(CONFLUENT_MAGIC_BYTE);
-            byte[] schemaIdBytes = ByteBuffer.allocate(4).putInt(registeredId).array();
-            out.write(schemaIdBytes);
-        } catch (RestClientException e) {
-            throw new IOException("Could not register schema in registry", e);
+        int registeredId = getSchemaId(schema);
+        out.write(CONFLUENT_MAGIC_BYTE);
+        byte[] schemaIdBytes = ByteBuffer.allocate(4).putInt(registeredId).array();
+        out.write(schemaIdBytes);
+    }
+
+    private int getSchemaId(Schema schema) throws IOException {
+        if (Boolean.FALSE.equals(autoRegisterSchema)) {
+            try {
+                return schemaRegistryClient.getId(subject, new AvroSchema(schema), true);
+            } catch (RestClientException e) {
+                throw new IOException("Could not get schema-id from registry", e);
+            }
+        } else {
+            try {
+                return schemaRegistryClient.register(subject, new AvroSchema(schema));
+            } catch (RestClientException e) {
+                throw new IOException("Could not register schema in registry", e);
+            }
         }
     }
 }

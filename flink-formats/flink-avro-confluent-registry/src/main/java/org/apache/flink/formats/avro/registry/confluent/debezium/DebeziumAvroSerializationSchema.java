@@ -87,7 +87,11 @@ public class DebeziumAvroSerializationSchema implements SerializationSchema<RowD
                 new AvroRowDataSerializationSchema(
                         debeziumAvroRowType,
                         ConfluentRegistryAvroSerializationSchema.forGeneric(
-                                schemaRegistrySubject, schema, schemaRegistryUrl, registryConfigs),
+                                schemaRegistrySubject,
+                                schema,
+                                schemaRegistryUrl,
+                                null,
+                                registryConfigs),
                         RowDataToAvroConverters.createConverter(debeziumAvroRowType));
     }
 

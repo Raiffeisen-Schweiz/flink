@@ -97,6 +97,7 @@ public class ConfluentRegistryAvroSerializationSchema<T>
                 new CachedSchemaCoderProvider(
                         subject,
                         schemaRegistryUrl,
+                        null,
                         DEFAULT_IDENTITY_MAP_CAPACITY,
                         registryConfigs));
     }
@@ -112,7 +113,7 @@ public class ConfluentRegistryAvroSerializationSchema<T>
      */
     public static ConfluentRegistryAvroSerializationSchema<GenericRecord> forGeneric(
             String subject, Schema schema, String schemaRegistryUrl) {
-        return forGeneric(subject, schema, schemaRegistryUrl, null);
+        return forGeneric(subject, schema, schemaRegistryUrl, null, null);
     }
 
     /**
@@ -122,6 +123,7 @@ public class ConfluentRegistryAvroSerializationSchema<T>
      * @param subject subject of schema registry to produce
      * @param schema schema that will be used for serialization
      * @param schemaRegistryUrl URL of schema registry to connect
+     * @param autoRegisterSchema set to false if schema should not be auto-registered
      * @param registryConfigs map with additional schema registry configs (for example SSL
      *     properties)
      * @return serialized record
@@ -130,6 +132,7 @@ public class ConfluentRegistryAvroSerializationSchema<T>
             String subject,
             Schema schema,
             String schemaRegistryUrl,
+            @Nullable Boolean autoRegisterSchema,
             @Nullable Map<String, ?> registryConfigs) {
         return new ConfluentRegistryAvroSerializationSchema<>(
                 GenericRecord.class,
@@ -137,6 +140,7 @@ public class ConfluentRegistryAvroSerializationSchema<T>
                 new CachedSchemaCoderProvider(
                         subject,
                         schemaRegistryUrl,
+                        autoRegisterSchema,
                         DEFAULT_IDENTITY_MAP_CAPACITY,
                         registryConfigs));
     }

@@ -34,6 +34,7 @@ import org.apache.flink.table.runtime.typeutils.InternalTypeInfo;
 import org.apache.flink.table.types.DataType;
 import org.apache.flink.table.types.logical.RowType;
 
+import io.confluent.kafka.schemaregistry.avro.AvroSchema;
 import io.confluent.kafka.schemaregistry.client.MockSchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
@@ -106,10 +107,25 @@ class RegistryAvroRowDataSeDeSchemaTest {
 
     @Test
     void testRowDataWriteReadWithPreRegisteredSchema() throws Exception {
-        client.register(SUBJECT, ADDRESS_SCHEMA);
+        client.register(SUBJECT, new AvroSchema(ADDRESS_SCHEMA));
         testRowDataWriteReadWithSchema(ADDRESS_SCHEMA);
         // Validates it does not produce new schema.
         assertThat(client.getAllVersions(SUBJECT)).hasSize(1);
+    }
+
+    @Test
+    void testRowDataWriteReadWithPreRegisteredSchemaWithoutAutoReegister() throws Exception {
+        client.register(SUBJECT, new AvroSchema(ADDRESS_SCHEMA));
+        testRowDataWriteReadWithSchema(ADDRESS_SCHEMA, false);
+        // Validates it does not produce new schema.
+        assertThat(client.getAllVersions(SUBJECT)).hasSize(1);
+    }
+
+    @Test
+    void testRowDataWriteReadWithoutAutoRegister() {
+        assertThatThrownBy(() -> testRowDataWriteReadWithSchema(ADDRESS_SCHEMA, false))
+                .isInstanceOf(RuntimeException.class)
+                .hasRootCause(new RestClientException("Subject Not Found", 0, 40401));
     }
 
     @Test
@@ -122,7 +138,7 @@ class RegistryAvroRowDataSeDeSchemaTest {
 
         deserializer.open(null);
 
-        client.register(SUBJECT, ADDRESS_SCHEMA);
+        client.register(SUBJECT, new AvroSchema(ADDRESS_SCHEMA));
         byte[] oriBytes = writeRecord(address, ADDRESS_SCHEMA);
         assertThatThrownBy(() -> deserializer.deserialize(oriBytes))
                 .isInstanceOf(IOException.class)
@@ -130,10 +146,16 @@ class RegistryAvroRowDataSeDeSchemaTest {
     }
 
     private void testRowDataWriteReadWithSchema(Schema schema) throws Exception {
+        testRowDataWriteReadWithSchema(schema, true);
+    }
+
+    private void testRowDataWriteReadWithSchema(Schema schema, boolean autoRegisterSchema)
+            throws Exception {
         DataType dataType = AvroSchemaConverter.convertToDataType(schema.toString());
         RowType rowType = (RowType) dataType.getLogicalType();
 
-        AvroRowDataSerializationSchema serializer = getSerializationSchema(rowType, schema);
+        AvroRowDataSerializationSchema serializer =
+                getSerializationSchema(rowType, schema, autoRegisterSchema);
         Schema writeSchema = AvroSchemaConverter.convertToSchema(dataType.getLogicalType());
         AvroRowDataDeserializationSchema deserializer =
                 getDeserializationSchema(rowType, writeSchema);
@@ -161,9 +183,9 @@ class RegistryAvroRowDataSeDeSchemaTest {
     // ------------------------------------------------------------------------
 
     private static AvroRowDataSerializationSchema getSerializationSchema(
-            RowType rowType, Schema avroSchema) {
+            RowType rowType, Schema avroSchema, boolean autoRegisterSchema) {
         ConfluentSchemaRegistryCoder registryCoder =
-                new ConfluentSchemaRegistryCoder(SUBJECT, client);
+                new ConfluentSchemaRegistryCoder(SUBJECT, client, autoRegisterSchema);
         return new AvroRowDataSerializationSchema(
                 rowType,
                 new RegistryAvroSerializationSchema<GenericRecord>(
@@ -174,7 +196,7 @@ class RegistryAvroRowDataSeDeSchemaTest {
     private static AvroRowDataDeserializationSchema getDeserializationSchema(
             RowType rowType, Schema avroSchema) {
         ConfluentSchemaRegistryCoder registryCoder =
-                new ConfluentSchemaRegistryCoder(SUBJECT, client);
+                new ConfluentSchemaRegistryCoder(SUBJECT, client, true);
         return new AvroRowDataDeserializationSchema(
                 new RegistryAvroDeserializationSchema<GenericRecord>(
                         GenericRecord.class, avroSchema, () -> registryCoder),

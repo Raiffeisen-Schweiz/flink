@@ -167,7 +167,7 @@ class DebeziumAvroSerDeSchemaTest {
     private AvroRowDataDeserializationSchema getDeserializationSchema(RowType rowType) {
 
         final ConfluentSchemaRegistryCoder registryCoder =
-                new ConfluentSchemaRegistryCoder(SUBJECT, client);
+                new ConfluentSchemaRegistryCoder(SUBJECT, client, null);
 
         return new AvroRowDataDeserializationSchema(
                 new RegistryAvroDeserializationSchema<>(
@@ -181,7 +181,7 @@ class DebeziumAvroSerDeSchemaTest {
     private AvroRowDataSerializationSchema getSerializationSchema(RowType rowType) {
 
         ConfluentSchemaRegistryCoder registryCoder =
-                new ConfluentSchemaRegistryCoder(SUBJECT, client);
+                new ConfluentSchemaRegistryCoder(SUBJECT, client, null);
         return new AvroRowDataSerializationSchema(
                 rowType,
                 new RegistryAvroSerializationSchema<>(

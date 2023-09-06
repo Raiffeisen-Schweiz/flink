@@ -60,6 +60,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.lang.String.format;
+import static org.apache.flink.formats.avro.registry.confluent.AvroConfluentFormatOptions.AUTO_REGISTER_SCHEMA;
 import static org.apache.flink.formats.avro.registry.confluent.AvroConfluentFormatOptions.BASIC_AUTH_CREDENTIALS_SOURCE;
 import static org.apache.flink.formats.avro.registry.confluent.AvroConfluentFormatOptions.BASIC_AUTH_USER_INFO;
 import static org.apache.flink.formats.avro.registry.confluent.AvroConfluentFormatOptions.BEARER_AUTH_CREDENTIALS_SOURCE;
@@ -128,6 +129,7 @@ public class RegistryAvroFormatFactory
         String schemaRegistryURL = formatOptions.get(URL);
         Optional<String> subject = formatOptions.getOptional(SUBJECT);
         Optional<String> schemaString = formatOptions.getOptional(SCHEMA);
+        Optional<Boolean> autoRegisterSchema = formatOptions.getOptional(AUTO_REGISTER_SCHEMA);
         Map<String, ?> optionalPropertiesMap = buildOptionalPropertiesMap(formatOptions);
 
         if (!subject.isPresent()) {
@@ -149,7 +151,11 @@ public class RegistryAvroFormatFactory
                 return new AvroRowDataSerializationSchema(
                         rowType,
                         ConfluentRegistryAvroSerializationSchema.forGeneric(
-                                subject.get(), schema, schemaRegistryURL, optionalPropertiesMap),
+                                subject.get(),
+                                schema,
+                                schemaRegistryURL,
+                                autoRegisterSchema.orElse(null),
+                                optionalPropertiesMap),
                         RowDataToAvroConverters.createConverter(rowType));
             }
 
@@ -177,6 +183,7 @@ public class RegistryAvroFormatFactory
         Set<ConfigOption<?>> options = new HashSet<>();
         options.add(SUBJECT);
         options.add(SCHEMA);
+        options.add(AUTO_REGISTER_SCHEMA);
         options.add(PROPERTIES);
         options.add(SSL_KEYSTORE_LOCATION);
         options.add(SSL_KEYSTORE_PASSWORD);
@@ -195,6 +202,7 @@ public class RegistryAvroFormatFactory
                         URL,
                         SUBJECT,
                         SCHEMA,
+                        AUTO_REGISTER_SCHEMA,
                         PROPERTIES,
                         SSL_KEYSTORE_LOCATION,
                         SSL_KEYSTORE_PASSWORD,

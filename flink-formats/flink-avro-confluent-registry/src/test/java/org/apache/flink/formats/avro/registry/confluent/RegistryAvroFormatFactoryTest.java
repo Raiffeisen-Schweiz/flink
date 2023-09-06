@@ -199,6 +199,7 @@ class RegistryAvroFormatFactoryTest {
                                 SUBJECT,
                                 new Parser().parse(SCHEMA_STRING),
                                 REGISTRY_URL,
+                                false,
                                 EXPECTED_OPTIONAL_PROPERTIES),
                         RowDataToAvroConverters.createConverter(ROW_TYPE));
 
@@ -272,6 +273,7 @@ class RegistryAvroFormatFactoryTest {
         // defined via general property map
         properties.put("properties.bearer.auth.token", "CUSTOM");
         properties.put("schema", SCHEMA_STRING);
+        properties.put("auto.register.schema", "false");
 
         return getModifiedOptions(
                 opts ->

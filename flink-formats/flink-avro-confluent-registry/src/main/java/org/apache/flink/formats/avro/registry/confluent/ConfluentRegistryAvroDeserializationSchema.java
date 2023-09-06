@@ -129,7 +129,8 @@ public class ConfluentRegistryAvroDeserializationSchema<T>
         return new ConfluentRegistryAvroDeserializationSchema<>(
                 GenericRecord.class,
                 schema,
-                new CachedSchemaCoderProvider(null, url, identityMapCapacity, registryConfigs));
+                new CachedSchemaCoderProvider(
+                        null, url, null, identityMapCapacity, registryConfigs));
     }
 
     /**
@@ -200,6 +201,7 @@ public class ConfluentRegistryAvroDeserializationSchema<T>
         return new ConfluentRegistryAvroDeserializationSchema<>(
                 tClass,
                 null,
-                new CachedSchemaCoderProvider(null, url, identityMapCapacity, registryConfigs));
+                new CachedSchemaCoderProvider(
+                        null, url, null, identityMapCapacity, registryConfigs));
     }
 }
